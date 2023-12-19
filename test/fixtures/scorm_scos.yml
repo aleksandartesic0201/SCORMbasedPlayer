@@ -1,0 +1,36 @@
+# == Schema Information
+#
+# Table name: scorm_scos
+#
+#  id           :bigint           not null, primary key
+#  identifier   :string
+#  launch       :string
+#  manifest     :string
+#  organization :string
+#  parent       :string
+#  scorm        :bigint
+#  scormtype    :string
+#  title        :string
+#  created_at   :datetime         not null
+#  updated_at   :datetime         not null
+#
+
+one:
+  scorm: 
+  manifest: MyString
+  organization: MyString
+  parent: MyString
+  identifier: MyString
+  launch: MyString
+  scormtype: MyString
+  title: MyString
+
+two:
+  scorm: 
+  manifest: MyString
+  organization: MyString
+  parent: MyString
+  identifier: MyString
+  launch: MyString
+  scormtype: MyString
+  title: MyString
