@@ -70,29 +70,37 @@ class Api::V1::ScormController < ApplicationController
       launch = scoes[0].launch
       return render json: {success: true, status: 200, data: launch}
     end
+
+    def getElementValue(scorm, sco, user, elementname)
+      trackData = ScormScoTrack.where(scorm: scorm, sco: sco, user: user, elementname: elementname)
+      value = ""
+      if !trackData.empty?
+        value = trackData[0].elementvalue
+      end
+      return value
+    end
     def getTrack
       @scormid = params[:id]
       @sco = params[:sco]
       @vs = params[:vs]
       @user = params[:user]
       jsonData = "{"
-      objTrack = ScormScoTrack.where(scorm: @scormid, sco: @sco, user: @user)
+      
       scoes = ScormSco::where(scorm: @scormid).where.not(launch: "")
       sco = scoes[0].id
       user = 1
       scorm = Scorm::find(@scormid)
 
       jsonData += '"version":"SCORM1.2",'
-      jsonData += '"cmi_core_student_id":"",'
-      jsonData += '"cmi_core_student_name":"",'
-      jsonData += '"cmi_core_lesson_status":"incomplete",'
-      jsonData += '"cmi_core_lesson_location":"0",'
-      jsonData += '"cmi_core_score_raw":"0",'
-      jsonData += '"cmi_core_score_max":"0",'
-      #jsonData += '"cmi_core_session_time":"00:00:00",'
-      jsonData += '"cmi_core_total_time":"00:00:00",'
-      jsonData += '"cmi_core_exit":"student",'
-      jsonData += '"cmi_suspend_data":"",'
+      jsonData += '"cmi_core_student_id":"' + getElementValue(@scormid, @sco, @user, "cmi.core.student_id") + '",'
+      jsonData += '"cmi_core_student_name":"' + getElementValue(@scormid, @sco, @user, "cmi.core.student_name") + '",'
+      jsonData += '"cmi_core_lesson_status":"' + getElementValue(@scormid, @sco, @user, "cmi.core.lesson_status") + '",'
+      jsonData += '"cmi_core_lesson_location":"' + getElementValue(@scormid, @sco, @user, "cmi.core.lesson_location") + '",'
+      jsonData += '"cmi_core_score_raw":"' + getElementValue(@scormid, @sco, @user, "cmi.core.score.raw") + '",'
+      jsonData += '"cmi_core_score_max":"' + getElementValue(@scormid, @sco, @user, "cmi.core.score.max") + '",'
+      jsonData += '"cmi_core_total_time":"' + getElementValue(@scormid, @sco, @user, "cmi.core.total_time") + '",'
+      jsonData += '"cmi_core_exit":"' + getElementValue(@scormid, @sco, @user, "cmi.core.exit") + '",'
+      jsonData += '"cmi_suspend_data":"' + getElementValue(@scormid, @sco, @user, "cmi.suspend_data") + '",'
       jsonData += '"user": "' + user.to_s + '",'
       jsonData += '"sco": "' + sco.to_s + '",'
       jsonData += '"scorm": "' + @scormid.to_s + '",'
