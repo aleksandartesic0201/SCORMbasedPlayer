@@ -142,9 +142,9 @@ const Dashboard = () => {
 
     setTimeout(function timeout() {
         if (windowobj.closed) {          
-          //window.parent.location.href = "";
+          window.parent.location.href = "";
         } else {
-          //setTimeout(timeout, 800);
+          setTimeout(timeout, 800);
         }
     }, 1000);
 
