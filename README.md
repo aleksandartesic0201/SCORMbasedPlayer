@@ -10,6 +10,8 @@ Things you may want to cover:
 * System dependencies
 
 * Configuration
+  * create the db `scormplayer`
+  * migrate the db schema via `rails db:migrate`
   * Install dependencies via `yarn install` or `npm install`
   * Start vite with: `npm run dev`
   * Start rails with `rails server`
