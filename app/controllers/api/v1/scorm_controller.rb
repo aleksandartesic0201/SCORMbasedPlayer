@@ -38,29 +38,61 @@ class Api::V1::ScormController < ApplicationController
         @courses = Scorm.all
         render json: @courses
     end
+    def deleteCourse
+        @scormid = params[:id]
+        Scorm::find(@scormid).delete
+    end
+    def getSCO
+      @scormid = params[:id]
+      scoes = ScormSco::where(scorm: @scormid).where.not(launch: "")
+      scorm = Scorm::find(@scormid)
+      sco = scoes[0].id
+      target = scorm.targetid
+      launch = target + "/" + scoes[0].launch
 
+      return render json: {success: true, status: 200, sco: sco, launch: launch}
+    end
+    def getStatus
+      @scormid = params[:id]
+      @userid = params[:user]
+      report = ScormReport::where(scorm: @scormid, user: @userid)
+      
+      status = report[0].completed_status
+      score = report[0].total_score
+      time = report[0].total_time
+
+      return render json: {success: true, status: 200, status: status, score: score, time: time}
+    end
+    def getLaunchFile
+      @scorm = params[:id]
+      @sco = params[:sco]
+      scoes = ScormSco::where(scorm: @scorm).where(id: @sco)
+      launch = scoes[0].launch
+      return render json: {success: true, status: 200, data: launch}
+    end
     def getTrack
       @scormid = params[:id]
-      #@sco = params[:sco]
-      #@vs = params[:vs]
+      @sco = params[:sco]
+      @vs = params[:vs]
+      @user = params[:user]
       jsonData = "{"
-      objTrack = ScormScoTrack.where(scorm: @scormid, sco:1)
+      objTrack = ScormScoTrack.where(scorm: @scormid, sco: @sco, user: @user)
       scoes = ScormSco::where(scorm: @scormid).where.not(launch: "")
       sco = scoes[0].id
       user = 1
       scorm = Scorm::find(@scormid)
 
       jsonData += '"version":"SCORM1.2",'
-      jsonData += '"cmi_core_student_id":"student",'
-      jsonData += '"cmi_core_student_name":"student",'
-      jsonData += '"cmi_core_lesson_status":"student",'
-      jsonData += '"cmi_core_lesson_location":"student",'
-      jsonData += '"cmi_core_score.raw":"student",'
-      jsonData += '"cmi_core_score.max":"student",'
-      jsonData += '"cmi_core_session_time":"student",'
-      jsonData += '"cmi_core_total_time":"student",'
+      jsonData += '"cmi_core_student_id":"",'
+      jsonData += '"cmi_core_student_name":"",'
+      jsonData += '"cmi_core_lesson_status":"incomplete",'
+      jsonData += '"cmi_core_lesson_location":"0",'
+      jsonData += '"cmi_core_score_raw":"0",'
+      jsonData += '"cmi_core_score_max":"0",'
+      #jsonData += '"cmi_core_session_time":"00:00:00",'
+      jsonData += '"cmi_core_total_time":"00:00:00",'
       jsonData += '"cmi_core_exit":"student",'
-      jsonData += '"cmi_suspend_data":"student",'
+      jsonData += '"cmi_suspend_data":"",'
       jsonData += '"user": "' + user.to_s + '",'
       jsonData += '"sco": "' + sco.to_s + '",'
       jsonData += '"scorm": "' + @scormid.to_s + '",'
@@ -70,13 +102,68 @@ class Api::V1::ScormController < ApplicationController
     end
 
     def setTrack
+      @sco = params[:sco]
+      @scorm = params[:scorm]
+      @user = params[:user]
+      
+      @total_score = 0;            
+      @completed_status = "Unknown";
+      @total_time = "00:00:00";
+
+      params.each do |key, value|
+          if key != "version" and key != "user" and key != "sco" and key != "scorm" and key != "launch" and key != "controller" and key != "action"    
+          key = key.gsub("__", ".")
+
+          case key
+          when "cmi.core.lesson_status"
+            @completed_status =  value
+          when "cmi.core.score.raw"
+            @total_score = value
+          when "cmi.core.total_time"
+            @total_time = value            
+          end 
+
+          data = {
+            scorm: @scorm,
+            sco: @sco,
+            user: @user,
+            elementname: key,
+            elementvalue: value
+          }
+
+          trackData = ScormScoTrack.where(scorm: @scorm, sco: @sco, user: @user, elementname: key)
+
+          if trackData.empty?
+            track = ScormScoTrack.new(data)
+            track.save()         
+          else
+            track = ScormScoTrack.find(trackData[0].id).update_columns(elementvalue: value)
+          end
+         end              
+      end
+            
+      reportData = ScormReport.where(scorm: @scorm, user: @user)
+
+      report = {
+            scorm: @scorm,
+            user: @user,
+            completed_status: @completed_status,
+            total_score: @total_score,
+            total_time: @total_time
+      }
+
+      if reportData.empty?
+        report = ScormReport.new(report)
+        report.save()         
+      else
+        report = ScormReport.where(:id => reportData[0].id).update_all({:completed_status => @completed_status, :total_score => @total_score, :total_time => @total_time})
+      end
 
     end
       # post '/course package'
     def upload  
         begin
           m_scormversion = ""
-          m_sXmlns2004 = "http://www.imsglobal.org/xsd/imscp_v1p1";
           m_sXmlns12 = "http://www.imsproject.org/xsd/imscp_rootv1p1p2";
           m_manifest = ""
           m_defaultOrg = ""
@@ -206,41 +293,39 @@ class Api::V1::ScormController < ApplicationController
               end
 
               data = {
-                title: File.basename(uploaded_io.original_filename),
+                title: File.basename(uploaded_io.original_filename, ".zip"),
                 reference: uploaded_io.original_filename,
                 version: m_scormversion,
-                targetid: dest_dir
+                targetid: random_dir
               }
-              scorm = Scorm.new(data)
-              scorm.save()
-              scormid = scorm.id
-              @m_scoesList.each_with_index do |scoes, index|
-                scoes.each do |sco|
-                  data = {
-                    scorm: scormid,
-                    manifest: m_manifest,
-                    organization: sco.organization,
-                    parent: sco.parent,
-                    identifier: sco.identifier,
-                    launch: sco.launch,
-                    scormtype: sco.scormtype,
-                    title: sco.title
-                  }
-                  scorm_scoes = ScormSco.new(data)
-                  scorm_scoes.save()
-
-                end
-              end            
+              if !m_manifest.empty?
+                scorm = Scorm.new(data)
+                scorm.save()
+                scormid = scorm.id
+                @m_scoesList.each_with_index do |scoes, index|
+                  scoes.each do |sco|
+                    data = {
+                      scorm: scormid,
+                      manifest: m_manifest,
+                      organization: sco.organization,
+                      parent: sco.parent,
+                      identifier: sco.identifier,
+                      launch: sco.launch,
+                      scormtype: sco.scormtype,
+                      title: sco.title
+                    }
+                    scorm_scoes = ScormSco.new(data)
+                    scorm_scoes.save()
+                  end
+                end     
+              end       
             else
-               
+               return render json: {success: false, status: 500}
             end
           end
-
-
           return render json: {success: true, status: 200}
         rescue => exception
           #  TODO: Log error
-          puts exception
           return render json: {success: false, status: 422, error: exception.message}
         end
     end

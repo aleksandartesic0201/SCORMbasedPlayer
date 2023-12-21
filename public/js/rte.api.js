@@ -106,27 +106,13 @@ function SCORMAPI(options) {
       'uig': 'uig', 'ukr': 'ukr', 'urd': 'urd', 'uzb': 'uzb', 'ven': 'ven', 'vie': 'vie', 'vol': 'vol', 'wln': 'wln', 'wol': 'wol', 'xho': 'xho', 'yid': 'yid', 'yor': 'yor', 'zha': 'zha', 'chi': 'chi', 'zho': 'zho', 'zul': 'zul'
   };
 
-  this.setSessionId = __bind(this.setSessionId, this);  
-
-  this.open = __bind(this.open, this);
-  this.Ping = __bind(this.Ping, this);
-  this.PopupError = __bind(this.PopupError, this);
-  this.LeavedPage = __bind(this.LeavedPage, this); 
   this.DoSetLog = __bind(this.DoSetLog, this);
-  this.clear = __bind(this.clear, this);
 
   this.data = {};  
   this.datamodel = {};
-  this.interactions = {}; 
-
-//   this.SCORM2004_DATA = {};
-//   this.SCORM2004_datamodel = {};
-//   this.SCORM2004_interactions = {};
-	
+  this.interactions = {}; 	
   this.options = options;
-  this.options.baseUrl = window.location.protocol + '//' + window.location.host;
 
-  this.clear();
   this.pingTimer= null;
   this.logSession = null;
   this.statusChanged = false;
@@ -159,20 +145,18 @@ function SCORMAPI(options) {
       cmi.interactions = new Object();
 	   
   	this.scorm = this.options.id;  	
-  	this.user = this.options.userId;
+  	this.user = this.options.user;
   	this.vs = this.options.vs;
+  	this.sco = this.options.sco;
 
-  	if ($.isNumeric(this.options.mode)) {
-  	    this.sco = this.options.mode;
-  	} else {
-  	    this.sco = this.options.scoId;
-  	}
   	
     var _this = this;
     var url = window.location.protocol + '//' + window.location.host;
     var pathname = window.location.pathname;
     var pos = pathname.lastIndexOf('/');
-    url = url + pathname.substring(0, pos + 1) + "course/gtrack?id=" + this.scorm
+    url = url + pathname.substring(0, pos + 1) + "course/gtrack?id=" + this.scorm + 
+        '&user=' + this.user +         
+        '&sco=' + this.sco + '&version=' + this.vs;
 
     $.getJSON(
     url,
@@ -596,19 +580,20 @@ SCORMAPI.prototype.StoreData = function(data, storetotaltime) {
   delete this.data.cmi_core_lesson_status;
   delete this.data.cmi_comments;
   delete this.data.cmi_core_total_time;
+  delete this.data.cmi_core_session_time;  
   delete this.data.cmi_launch_data;
 
   var url = window.location.protocol + '//' + window.location.host;
   var pathname = window.location.pathname;
   var pos = pathname.lastIndexOf('/');
   url = url + pathname.substring(0, pos + 1) + "course/strack?scorm=" + this.scorm +
-      'user=' + this.user +       
+      '&user=' + this.user +
       '&sco=' + this.sco + '&version=' + this.vs;
- 
+
   var myRequest = NewHttpReq();
   //DoRequests(myRequest, url, "datakey=" + datastring);
   
-  /*
+  
   $.ajax({
         url: url,
         dataType: 'json',
@@ -623,7 +608,7 @@ SCORMAPI.prototype.StoreData = function(data, storetotaltime) {
 
         }
   });
-  */
+  
   return "true";
 };
 
@@ -785,48 +770,6 @@ SCORMAPI.prototype.TotalTime = function() {
   return '&' + this.underscore('cmi.core.total_time') + '=' + encodeURIComponent(total_time);
 };
 
-SCORMAPI.prototype.Ping = function() {
-
-};
-
-SCORMAPI.prototype.PopupError = function(msg) {
-   $("<p>"+msg+'</p>' ).dialog({
-      title : 'Error',
-      modal: true,
-        buttons: {
-          Ok: function() {
-          $( this ).dialog( "close" );
-        }
-      }
-    });
-};
-
-SCORMAPI.prototype.LeavedPage = function() {
-
-};
-
-SCORMAPI.prototype.clear = function() {
-  this.data = {
-    obid: this.options.obid,
-    cmicsi: this.options.cmicsi
-  };
-  this.interactions = {
-    obid: this.options.obid,
-    cmicsi: this.options.cmicsi
-  };
-  return console.log('');
-};
-
-SCORMAPI.prototype.open = function(session_id, url) {
-  this.setSessionId(session_id);
-  return window.open(url);
-};
-
-SCORMAPI.prototype.setSessionId = function(session_id) {
-  this.options.obid = session_id;
-  return this.clear();
-};
-
 SCORMAPI.prototype.DoSetLog = function(log) {
-
+    console.log(log);
 };

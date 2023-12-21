@@ -1,46 +1,110 @@
 import React , { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import Box from '@mui/material/Box';
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
 import Link from "@mui/material/Link";
-import Table from '@mui/material/Table';
+
 import Input from '@mui/material/Input';
 import Item from "@mui/material/Grid";
+import Modal from '@mui/material/Modal';
+import Paper from '@mui/material/Paper';
+import Stack from "@mui/material/Stack";
+import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
-import Modal from '@mui/material/Modal';
 import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
+import UploadIcon from "@mui/icons-material/Upload";
 
 import "./Dashboard.scss";
 
 const Dashboard = () => {
 
+  const [dest, setDest] = useState("uploads/");
   const [scorm, setScorm] = useState(0);
+  const [sco, setSco] = useState(0);
+  const [user, setUser] = useState(1);
+  const [launchFile, setLaunchFile] = useState();
   const [title, setTitle] = useState();
+  const [status, setStatus] = useState("Unknown");
+  const [score, setScore] = useState("0.0");
+  const [time, setTime] = useState("00:00:00");
   const [courses, setCourses] = useState([]);
   const [API, setAPI] = useState();
   
   const [scoesTrack, setScoesTrack] = useState([]);
   const [openCourse, setOpenCourse] = useState(false);
   const [open, setOpen] = React.useState(false);
-  //const handleOpen = () => setOpen(true);
+  const [openStatus, setOpenStatus] = React.useState(false);
   const handleClose = () => setOpen(false);
+  const handleStatusClose = () => setOpenStatus(false);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetch("/course/list", {
+      method: "GET"     
+    })
+    .then((response) => response.json())
+    .then((data) => {
+      setCourses(data);      
+    })
+    .catch((error) => console.log(error));
+  }, [null]);
 
   const handleOpen = (scorm, title) => {
     
-    window.initializeAPI(scorm);
+    fetch("/course/getsco?id=" + scorm, {
+      method: "GET"     
+    })
+    .then((response) => response.json())
+    .then((result) => {      
+      console.log(result);
+      setSco(result.sco);
+      setLaunchFile(result.launch);
+      var userid = user;
+      window.initializeAPI(scorm, result.sco, userid);
+    })
+    .catch((error) => console.log(error));
+    
     setScorm(scorm);
     setTitle(title);
-
-    setOpen(true);
-
-    
+    setOpen(true);    
   };
+
+  const handleStatus = (scorm, title) => {
+    
+    fetch("/course/getstatus?id=" + scorm + "&user=" + user, {
+      method: "GET"     
+    })
+    .then((response) => response.json())
+    .then((result) => {      
+      
+      setStatus(result.status);
+      setScore(result.score);
+      setTime(result.time);
+    })
+    .catch((error) => console.log(error));
+    setTitle(title);
+    setOpenStatus(true);
+  };
+
+  const handleDelete = (scorm) => {
+    
+    fetch("/course/delcourse?id=" + scorm, {
+      method: "GET"     
+    })
+    .then((response) => response.json())
+    .then((result) => { 
+      navigate("/list")
+    })
+    .catch((error) => console.log(error));  
+  };
+
   const style = {
     position: 'absolute',
     top: '50%',
@@ -52,32 +116,6 @@ const Dashboard = () => {
     boxShadow: 24,
     p: 5,
   };
-
-  useEffect(() => {
-    fetch("/course/list", {
-      method: "GET"     
-    })
-    .then((response) => response.json())
-    .then((data) => {
-      setCourses(data);      
-    })
-    .catch((error) => console.log(error));
-
-    // fetch("/course/getScoes?id=7", {
-    //   method: "GET"     
-    // })
-    // .then((response) => response.json())
-    // .then((result) => {
-      
-    //   let trackObj = JSON.parse(result.data);
-    //   setScoesTrack(trackObj);
-    //   if (trackObj.version == "scorm12") {
-    //     //setAPI(new SCORMapi1_2(trackObj, "setTrack"));
-    //   }
-    // })
-    // .catch((error) => console.log(error));
-
-  }, [null]);
 
   const PleaseClickStyle = {
     display: 'block',
@@ -99,14 +137,14 @@ const Dashboard = () => {
     height = Math.round(screen.availHeight);
     
     var options = ",width=" + width + ",height=" + height;
-
-    var windowobj = window.open("uploads/4103887a0513c3c44cc679215bc435d7/index_lms.html", "Player", options);
+    
+    var windowobj = window.open(dest + launchFile, "Player", options);
 
     setTimeout(function timeout() {
         if (windowobj.closed) {          
-          window.parent.location.href = "";
+          //window.parent.location.href = "";
         } else {
-          setTimeout(timeout, 800);
+          //setTimeout(timeout, 800);
         }
     }, 1000);
 
@@ -116,8 +154,18 @@ const Dashboard = () => {
   return (
     <Container maxWidth="lg" className="Register">
       <h1>
-        <AutoAwesomeIcon className="Login__stars" /> SCORM Course Player
+        <AutoAwesomeIcon className="Login__stars" /> SCORM Course Player      
       </h1>
+      <Button
+        variant="outlined"
+        size="large"
+        endIcon={<UploadIcon />}
+        color="secondary"
+        component={Link}
+        onClick={() => navigate("/upload")}
+      >
+                      Upload
+      </Button>  
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 650 }} aria-label="simple table">
           <TableHead>
@@ -132,17 +180,40 @@ const Dashboard = () => {
               <TableRow key={i}>
                 <TableCell>{course.title}</TableCell >
                 <TableCell>{course.version}</TableCell >
-                <TableCell>                
+                <TableCell>  
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  className="Dashboard__button-group"
+                >                              
                 <Button
                       variant="outlined"
                       size="large"                     
-                      color="secondary"
                       component={Link}                      
                       onClick={(e)=>handleOpen(course.id, course.title)}
                     >
                       Launch
                 </Button>
-                </TableCell >
+                <Button
+                      variant="outlined"
+                      size="large"                     
+                      color="secondary"
+                      component={Link}                      
+                      onClick={(e)=>handleStatus(course.id, course.title)}
+                    >
+                      Status
+                </Button>                  
+                <Button
+                      variant="outlined"
+                      size="large"                     
+                      color="secondary"
+                      component={Link}                      
+                      onClick={(e)=>handleDelete(course.id)}
+                    >
+                      Delete
+                </Button>  
+                </Stack>              
+                </TableCell>
               </TableRow>                
               ))}             
           </TableBody>
@@ -173,6 +244,38 @@ const Dashboard = () => {
             </Box> 
         </Modal>  
 
+        <Modal
+          open={openStatus}
+          onClose={handleStatusClose}    
+  
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+            <Box sx={style}>
+              <Typography id="PleaseClick" variant="h6" component="h2">
+              {title}
+              </Typography>
+              <TableContainer component={Paper}>
+                <Table  aria-label="simple table">
+
+                  <TableBody>
+                      <TableRow>
+                          <TableCell sx={{ border:1 }}>Complete Status</TableCell >
+                          <TableCell sx={{ border:1 }}>{status}</TableCell >                          
+                      </TableRow>
+                      <TableRow>
+                          <TableCell sx={{ border:1 }}>Score</TableCell >
+                          <TableCell sx={{ border:1 }}>{score}</TableCell >                          
+                      </TableRow>
+                      <TableRow>
+                          <TableCell sx={{ border:1 }}>Total Time</TableCell >
+                          <TableCell sx={{ border:1 }}>{time}</TableCell >                          
+                      </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box> 
+        </Modal> 
     </Container>
   );
 };

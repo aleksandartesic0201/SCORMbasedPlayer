@@ -10,9 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_12_15_165136) do
+ActiveRecord::Schema[7.0].define(version: 2023_12_21_104619) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "scorm_reports", force: :cascade do |t|
+    t.bigint "scorm"
+    t.bigint "user"
+    t.string "completed_status"
+    t.string "total_score"
+    t.string "total_time"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
 
   create_table "scorm_sco_tracks", force: :cascade do |t|
     t.bigint "scorm"

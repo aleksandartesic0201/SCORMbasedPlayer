@@ -1,32 +1,17 @@
-
-
-$(function(){
-	// var url = $.url(); window.url = url;
-	// var params = url.data.param.query;
-	// console.log(url);
-	// var API = null;
+function initializeAPI (scorm, sco, user) {
 	
-	// API = new SCORMAPI(params);
-	
-	// window.API = API;
-	// $(window).on('beforeunload', function () {
-	    
-	// });
-});
-
-function initializeAPI (scorm) {
-	var url = $.url(); window.url = url;
-	var params = url.data.param.query;
-	
-	var API = null;
+	var params = new Object();
+	params.id = new Object();
+	params.user = new Object();
+	params.scoe = new Object();
 	params.id = scorm;
+	params.user = user;
+	params.sco = sco;
 	params.vs = "SCORM1.2";
+	var API = null;
 	API = new SCORMAPI(params);
 	
 	window.API = API;
-	$(window).on('beforeunload', function () {
-	    
-	});
 }
 
 var attempt;
@@ -48,6 +33,7 @@ function NewHttpReq()
 function DoRequests(req, url, param) 
 {
 	console.log(param);
+	console.log(url);
 	req.open("POST", url, false);
 	req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
 	req.send(param);

@@ -17,10 +17,12 @@ import TextField from "@mui/material/TextField";
 
 import "./Upload.scss";
 const Upload = () => {
+  const [errorMsg, setErrorMsg] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const [courseFile, setCourseFile] = React.useState();
   const [success, setSuccess] = React.useState();
+  const [failed, setFailed] = React.useState();
 
   const [courseFileError, setCourseFileError] = React.useState();
   const [postError, setPostError] = React.useState();
@@ -30,7 +32,15 @@ const Upload = () => {
 
   const handleFileUpload = (event) => {
     // get the selected file from the input
+    const allowedTypes = ["application/zip"];
     const file = event.target.files[0];
+
+    if (!allowedTypes.includes(file?.type)) {
+      setCourseFileError("Only Zip file are allowed.");
+    } else {
+      setCourseFileError("");
+    }
+
     // create a new FormData object and append the file to it    
     formData.append("file", file);
     setCourseFile(formData);    
@@ -63,7 +73,7 @@ const Upload = () => {
   // FIXME: This logic should be improved
   const validateForm = () => {
     let isValid = true;
-    if (!courseFile) {
+    if (!courseFile || courseFileError != "") {
       setCourseFileError("File is required");
       isValid = false;
     }
@@ -86,8 +96,8 @@ const Upload = () => {
             <h2>
               Welcome! <AutoAwesomeIcon className="Import__stars" /> the SCORM 1.2 package
             </h2>
-            {success ? <p>Imported successfully!</p> : <p>There are some problems while uploading the package.</p>}
-            
+            {success ? <p>Imported successfully!</p> : ""}
+            {failed ? <p>There are some problems while uploading the package.</p> : ""}
             <Grid container spacing={2}>              
               <Grid item xs={12}>
                 <Item>
@@ -127,9 +137,9 @@ const Upload = () => {
                       endIcon={<HowToRegIcon />}
                       color="secondary"
                       component={Link}
-                      onClick={() => navigate("/dashboard")}
+                      onClick={() => navigate("/list")}
                     >
-                      Home
+                      List
                     </Button>
                   </Stack>
                 </Item>
