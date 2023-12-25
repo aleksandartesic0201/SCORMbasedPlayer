@@ -55,7 +55,7 @@ const Login = () => {
           setPostError(res.error);
           return;
         }
-        navigate("/dashboard");
+        navigate("/list");
       })
       .catch((error) => {
         console.log(error);
