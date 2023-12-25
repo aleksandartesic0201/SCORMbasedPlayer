@@ -14,14 +14,14 @@ Rails.application.routes.draw do
   get '/user/logout', to: 'api/v1/user#logout'
 
   get '/course/list', to: 'api/v1/scorm#index'
-  post '/course/upload', to: 'api/v1/scorm#upload'
-  get '/course/launch', to: 'api/v1/scorm#launch'
   get '/course/gtrack', to: 'api/v1/scorm#getTrack'
-  post '/course/strack', to: 'api/v1/scorm#setTrack'
   get '/course/getsco', to: 'api/v1/scorm#getSCO'
-  get '/course/getlaunch', to: 'api/v1/scorm#getLaunchFile'
   get '/course/delcourse', to: 'api/v1/scorm#deleteCourse'
   get '/course/getstatus', to: 'api/v1/scorm#getStatus'
+  post '/course/upload', to: 'api/v1/scorm#upload'
+  post '/course/strack', to: 'api/v1/scorm#setTrack'
+  #get '/course/getlaunch', to: 'api/v1/scorm#getLaunchFile'
+  #get '/course/launch', to: 'api/v1/scorm#launch'
   # Redirect all other routes back to front-end React application
   # If we don't do this, refreshing the page will break as Rails will not know
   # how to redirect back to React SPA.

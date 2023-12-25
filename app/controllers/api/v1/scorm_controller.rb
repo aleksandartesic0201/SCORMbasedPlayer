@@ -33,15 +33,17 @@ class Api::V1::ScormController < ApplicationController
 
   #skip_before_action :verify_authenticity_token, except: [:index]
   skip_before_action :verify_authenticity_token
-  
+      # get '/course/list'
     def index
         @courses = Scorm.all
         render json: @courses
     end
+      # get 'course/delcourse'
     def deleteCourse
         @scormid = params[:id]
         Scorm::find(@scormid).delete
     end
+      # get '/course/getsco'
     def getSCO
       @scormid = params[:id]
       scoes = ScormSco::where(scorm: @scormid).where.not(launch: "")
@@ -52,6 +54,7 @@ class Api::V1::ScormController < ApplicationController
 
       return render json: {success: true, status: 200, sco: sco, launch: launch}
     end
+      # get '/course/getstatus'
     def getStatus
       @scormid = params[:id]
       @userid = params[:user]
@@ -63,14 +66,6 @@ class Api::V1::ScormController < ApplicationController
 
       return render json: {success: true, status: 200, status: status, score: score, time: time}
     end
-    def getLaunchFile
-      @scorm = params[:id]
-      @sco = params[:sco]
-      scoes = ScormSco::where(scorm: @scorm).where(id: @sco)
-      launch = scoes[0].launch
-      return render json: {success: true, status: 200, data: launch}
-    end
-
     def getElementValue(scorm, sco, user, elementname)
       trackData = ScormScoTrack.where(scorm: scorm, sco: sco, user: user, elementname: elementname)
       value = ""
@@ -79,6 +74,7 @@ class Api::V1::ScormController < ApplicationController
       end
       return value
     end
+      # get '/course/gtrack'
     def getTrack
       @scormid = params[:id]
       @sco = params[:sco]
@@ -108,7 +104,7 @@ class Api::V1::ScormController < ApplicationController
       jsonData += '}';
       return render json: {success: true, status: 200, data: jsonData}
     end
-
+      # post '/course/strack'
     def setTrack
       @sco = params[:sco]
       @scorm = params[:scorm]
@@ -166,9 +162,8 @@ class Api::V1::ScormController < ApplicationController
       else
         report = ScormReport.where(:id => reportData[0].id).update_all({:completed_status => @completed_status, :total_score => @total_score, :total_time => @total_time})
       end
-
     end
-      # post '/course package'
+      # post '/course/upload'
     def upload  
         begin
           m_scormversion = ""
